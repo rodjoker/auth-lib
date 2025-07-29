@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  # 1. Servicio de PostgreSQL (la base de datos)
+  db:
+    image: postgres:16-alpine # Imagen oficial de PostgreSQL, versión 16 (la variante 'alpine' es más ligera)
+    restart: always # Configura el contenedor para que se reinicie automáticamente si falla
+    environment: # Variables de entorno que PostgreSQL usará para su configuración inicial
+      POSTGRES_USER: ${DB_USERNAME} # El usuario de la base de datos (se leerá del .env)
+      POSTGRES_PASSWORD: ${DB_PASSWORD} # La contraseña del usuario (se leerá del .env)
+      POSTGRES_DB: ${DB_DATABASE} # El nombre de la base de datos a crear (se leerá del .env)
+    ports:
+      - "5432:5432" # Mapea el puerto: "PUERTO_EN_TU_MAQUINA:PUERTO_EN_EL_CONTENEDOR"
+                    # Esto significa que puedes acceder a la DB desde tu máquina en localhost:5432
+    volumes:
+      - pgdata:/var/lib/postgresql/data # Volumen persistente para almacenar los datos de la DB
+                                        # Esto asegura que tus datos no se pierdan si el contenedor se elimina o recrea
+
+  # 2. Servicio de tu aplicación NestJS (Opcional, pero muy recomendado para un entorno de desarrollo consistente)
+  nestjs_app:
+    build:
+      context: . # El contexto de construcción es el directorio actual (donde está este docker-compose.yml)
+      dockerfile: Dockerfile # Indica que debe usar el archivo Dockerfile en este mismo directorio para construir la imagen
+    depends_on:
+      - db # Asegura que el servicio 'db' (PostgreSQL) se inicie y esté listo antes que 'nestjs_app'
+    ports:
+      - "3000:3000" # Mapea el puerto de tu aplicación NestJS: "PUERTO_EN_TU_MAQUINA:PUERTO_EN_EL_CONTENEDOR"
+                    # Asumiendo que tu NestJS corre en el puerto 3000
+    environment: # Variables de entorno que tu aplicación NestJS usará DENTRO del contenedor
+      DB_HOST: db # ¡IMPORTANTE! El host es el NOMBRE del servicio de la base de datos dentro de la red de Docker Compose
+                  # No es 'localhost' porque 'localhost' dentro del contenedor se refiere al propio contenedor.
+      DB_PORT: 5432 # El puerto por defecto de PostgreSQL
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_DATABASE: ${DB_DATABASE}
+      NODE_ENV: development # O 'production' si lo despliegas así
+    volumes:
+      - .:/app # Monta el directorio actual de tu proyecto (tu código) dentro del contenedor en /app
+               # Esto permite que los cambios en tu código se reflejen sin reconstruir la imagen del contenedor.
+      - /app/node_modules # Una excepción para evitar que el node_modules de tu máquina local sobrescriba el del contenedor,
+                          # que podría tener dependencias compiladas para Linux si usas una imagen base de Linux.
+    command: npm run start:dev # El comando que se ejecutará para iniciar tu aplicación NestJS dentro del contenedor
+                               # Asegúrate de que este script exista en tu package.json
+
+# Definición de volúmenes (para persistir los datos de la DB)
+volumes:
+  pgdata:
