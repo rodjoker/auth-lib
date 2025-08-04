@@ -8,6 +8,11 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { RoleController } from './role/role.controller';
 import { UsersService } from './users/users.service';
 import { RolesModule } from './role/role.module';
+import { PlansModule } from './plans/plans.module';   
+import { NuveiService } from './payments/nuvei/nuvei.service';
+import { PaymentsController } from './payments/payments.controller';
+import { PaymentsModule } from './payments/payments.module';
+
 
 @Module({
    imports: [
@@ -27,8 +32,11 @@ import { RolesModule } from './role/role.module';
     UsersModule, 
     AuthModule,
     RolesModule,
+    PlansModule,
+    PaymentsModule,
+
   ],
-  controllers: [AppController, RoleController],
-  providers: [AppService],
+  controllers: [AppController, RoleController, PaymentsController],
+  providers: [AppService, NuveiService],
 })
 export class AppModule {}

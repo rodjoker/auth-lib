@@ -5,6 +5,7 @@ import { AuthService } from './auth/auth.service';
 import { UsersService } from './users/users.service';
 import { RolesService } from './role/role.service';
 import { Role } from './role/role.entity';  
+ 
 
 @Controller()
 export class AppController {
@@ -45,39 +46,59 @@ export class AppController {
   }
 
   @Post('auth/register')
-  async register(@Body() body: { username: string; password: string; rol: number }) {
-    const { username, password, rol } = body;
-  
+
+
+  async register(@Body() body: { 
+    username: string; 
+    password: string; 
+    rol: number; 
+    name: string; 
+    lastname: string; 
+    email: string; 
+    suscription: string 
+  }) {
+    const { username, password, rol, name, lastname, email, suscription } = body;
+   
     // Validación básica
-    if (!username || !password || !rol) {
-      throw new BadRequestException('Username, password y rol son requeridos.');
+    if (!username || !password || !rol || !email || !suscription || !lastname || !name) {
+      throw new BadRequestException('Username, password, rol y email son requeridos.');
     }
   
-    // Validar si el usuario ya existe
+    // Validar formato de email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      throw new BadRequestException('El correo electrónico no es válido.');
+    }
+  
+    // Verificar si el usuario ya existe
     const existingUser = await this.usersService.findByUsername(username);
     if (existingUser) {
       throw new BadRequestException('El nombre de usuario ya existe.');
     }
   
-    // Validar si el rol existe en la base de datos
-    const roleEntity = await this.rolesService.findById(rol); // ← usa tu service de roles
+    // Verificar si el rol existe
+    const roleEntity = await this.rolesService.findById(rol);
     if (!roleEntity) {
       throw new BadRequestException(`El rol con ID ${rol} no existe.`);
-    }
+    } 
   
-    // Crear usuario usando el objeto rol válido
-    const newUser = await this.usersService.create(username, password, roleEntity);
+    // Crear usuario
+    const newUser = await this.usersService.create(username, password, roleEntity, name, lastname, email, suscription);
   
     return {
       message: 'Usuario creado exitosamente.',
       user: {
         id: newUser.id,
         username: newUser.username,
-        rol: newUser.rol, // ← puede ser ID o nombre, según tu diseño
+        rol: newUser.rol,
+        email: newUser.email
       },
     };
   }
-  
+
+
+
+  @UseGuards(JwtAuthGuard)
   @Get('roles') // genera la ruta /roles-from-app
   async getRolesFromApp(): Promise<Role[]> {
     return this.rolesService.findAll();
