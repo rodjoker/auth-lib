@@ -57,16 +57,16 @@ export class AppController {
     email: string; 
     suscription: string 
   }) {
-    const { username, password, rol, name, lastname, email, suscription } = body;
-   
+    const { username, password, rol=1, name, lastname, email=username, suscription="Freed" } = body;
+    
     // Validación básica
-    if (!username || !password || !rol || !email || !suscription || !lastname || !name) {
-      throw new BadRequestException('Username, password, rol y email son requeridos.');
+    if (!username || !password || !rol ||   !suscription || !lastname || !name) {
+      throw new BadRequestException('name, lastname, email y password requerid.');
     }
   
     // Validar formato de email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
+    if (!emailRegex.test(username)) {
       throw new BadRequestException('El correo electrónico no es válido.');
     }
   
