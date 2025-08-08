@@ -70,7 +70,7 @@ export class CsvService {
       });
   }
 
-  buscarFiltrado(query: string, page: number, limit: number) {
+  buscarFiltradofuncional(query: string, page: number, limit: number) {
     const searchTerm = query.toLowerCase();
 
     const filtrados = this.data.filter(
@@ -92,6 +92,52 @@ export class CsvService {
       data: paginados,
     };
   }
-
+  
+  buscarFiltrado(query: string, page: number, limit: number) {
+    const searchTerm = query?.trim().toLowerCase();
+  
+    if (!searchTerm) {
+      return {
+        total: 0,
+        page,
+        limit,
+        totalPages: 0,
+        data: [],
+        message: 'No se proporcionó un término de búsqueda.',
+      };
+    }
+  
+    const filtrados = this.data.filter(
+      (item) =>
+        item.NOMBRE.toLowerCase().includes(searchTerm) ||
+        item.RUC.toLowerCase().includes(searchTerm) ||
+        item.CORREO.toLowerCase().includes(searchTerm)
+    );
+  
+    const total = filtrados.length;
+    const totalPages = Math.ceil(total / limit);
+  
+    if (page > totalPages) {
+      return {
+        total,
+        page,
+        limit,
+        totalPages,
+        data: [],
+        message: `La página solicitada (${page}) excede el total de páginas disponibles (${totalPages}).`,
+      };
+    }
+  
+    const start = (page - 1) * limit;
+    const paginados = filtrados.slice(start, start + limit);
+  
+    return {
+      total,
+      page,
+      limit,
+      totalPages,
+      data: paginados,
+    };
+  }
 
 }
