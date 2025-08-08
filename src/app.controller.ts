@@ -1,11 +1,14 @@
-import { Controller, Get, Request, Post, UseGuards, BadRequestException, Body } from '@nestjs/common';
+import { Controller, Get, Request, Post, UseGuards, BadRequestException, Body, Query} from '@nestjs/common';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { LocalAuthGuard } from './auth/local-auth.guard';
 import { AuthService } from './auth/auth.service';
 import { UsersService } from './users/users.service';
 import { RolesService } from './role/role.service';
 import { Role } from './role/role.entity';  
- 
+import * as fs from 'fs';
+import * as path from 'path';
+import * as csv from 'csv-parser';
+
 
 @Controller()
 export class AppController {
@@ -96,12 +99,82 @@ export class AppController {
     };
   }
 
-
-
   @UseGuards(JwtAuthGuard)
   @Get('roles') // genera la ruta /roles-from-app
   async getRolesFromApp(): Promise<Role[]> {
     return this.rolesService.findAll();
+  }
+
+  @Get('data')
+  async getEmails() {
+    const filePath = path.join(process.cwd(), 'src/data', 'emails.csv');
+
+    return new Promise((resolve, reject) => {
+      const results: Record<string, string>[] = [];
+
+      fs.createReadStream(filePath)
+        .pipe(csv())
+        .on('data', (data: Record<string, string>) => results.push(data))
+        .on('end', () => resolve(results))
+        .on('error', (err) => reject(err));
+    });
+  }
+
+  @Get('dataPag')
+  async getEmailss(
+    @Query('nombre') nombre?: string,
+    @Query('ruc') ruc?: string,
+    @Query('correo') correo?: string,
+    @Query('page') page: string = '1',
+    @Query('limit') limit: string = '10',
+  ) {
+    const filePath = path.join(process.cwd(), 'src', 'emails.csv'); // o 'data/emails.csv'
+
+    return new Promise((resolve, reject) => {
+      const results: Record<string, string>[] = [];
+
+      fs.createReadStream(filePath)
+        .pipe(csv())
+        .on('data', (data: Record<string, string>) => {
+          results.push(data);
+        })
+        .on('end', () => {
+          let filtered = results;
+
+          // Filtros
+          if (nombre) {
+            filtered = filtered.filter((row) =>
+              row.NOMBRE?.toLowerCase().includes(nombre.toLowerCase()),
+            );
+          }
+          if (ruc) {
+            filtered = filtered.filter((row) =>
+              row.RUC?.toLowerCase().includes(ruc.toLowerCase()),
+            );
+          }
+          if (correo) {
+            filtered = filtered.filter((row) =>
+              row.CORREO?.toLowerCase().includes(correo.toLowerCase()),
+            );
+          }
+
+          // Paginación
+          const pageNum = parseInt(page, 10);
+          const limitNum = parseInt(limit, 10);
+          const start = (pageNum - 1) * limitNum;
+          const end = start + limitNum;
+
+          const paginated = filtered.slice(start, end);
+
+          resolve({
+            total: filtered.length,
+            page: pageNum,
+            limit: limitNum,
+            data: paginated,
+          });
+        })
+        .on('error', (err) => reject(err));
+    });
   }
 
 

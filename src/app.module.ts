@@ -12,6 +12,9 @@ import { PlansModule } from './plans/plans.module';
 import { NuveiService } from './payments/nuvei/nuvei.service';
 import { PaymentsController } from './payments/payments.controller';
 import { PaymentsModule } from './payments/payments.module';
+import { CsvController } from './csv/csv.controller';
+import { CsvService } from './csv/csv.services';
+
 
 
 @Module({
@@ -36,7 +39,7 @@ import { PaymentsModule } from './payments/payments.module';
     PaymentsModule,
 
   ],
-  controllers: [AppController, RoleController, PaymentsController],
-  providers: [AppService, NuveiService],
+  controllers: [AppController, RoleController, PaymentsController, CsvController],
+  providers: [AppService, NuveiService,CsvService],
 })
 export class AppModule {}
