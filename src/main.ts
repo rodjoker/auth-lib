@@ -3,12 +3,12 @@ import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  const PORT = 10000
+  
   app.enableCors({
-    origin: 'https://auth-server-project.onrender.com/', // O la URL donde corre tu frontend
+    origin: 'http://localhost:3000', // O la URL donde corre tu frontend
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true, // Si vas a enviar cookies o headers de autorización
   });
-  await app.listen(PORT ?? 3000);
+  await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();
