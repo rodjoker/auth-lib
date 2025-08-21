@@ -63,7 +63,7 @@ import { DatabaseSeedService } from './database/database-seed.service';
   ],
   providers: [
     AppService,
-    NuveiService,
+   // NuveiService,
     CsvService,
     DatabaseSeedService, // se ejecutará al iniciar
   ],
